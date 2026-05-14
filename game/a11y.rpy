@@ -110,3 +110,36 @@ label a11y_export:
     python:
         a11y.save_to_file()
     return
+
+# 在 a11y.rpy 末尾添加
+
+label a11y_wait_for_agent:
+    """
+    等待Agent决策并返回choice_index
+    用法: call a11y_wait_for_agent
+    $ agent_choice = _return
+    """
+    python:
+        import os
+        import time
+        
+        choice_file = os.path.join(renpy.config.gamedir, "exports", "choice.txt")
+        
+        # 清空旧的选择文件（重要！）
+        if os.path.exists(choice_file):
+            os.remove(choice_file)
+        
+        # 等待Agent写入（最多30秒）
+        wait_time = 0
+        while not os.path.exists(choice_file) and wait_time < 30:
+            time.sleep(0.5)
+            wait_time += 0.5
+        
+        # 读取选择
+        if os.path.exists(choice_file):
+            with open(choice_file, 'r') as f:
+                agent_choice = int(f.read().strip())
+        else:
+            agent_choice = 0  # 超时默认选第一个
+    
+    return agent_choice

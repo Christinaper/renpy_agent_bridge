@@ -1,6 +1,8 @@
 ﻿# A11y-RenPy-Bridge Demo Game
 # Three abstract scenes for technical validation
 
+define AGENT_MODE = True  # 设为False恢复手动模式
+
 # Scene definitions
 init python:
     scenes = {
@@ -36,6 +38,7 @@ init python:
     
     # Global state
     current_scene_id = "room"
+    current_narrative = ""
     choice_history = []
     menu_items = []
 
@@ -44,7 +47,9 @@ label start:
     
     # Initialize
     $ current_scene_id = "room"
+    $ current_narrative = ""
     $ choice_history = []
+    $ menu_items = []
     
     jump scene_room
 
@@ -57,12 +62,10 @@ label scene_room:
     
     "You are in a room."
     "There is an object here."
-    
-    # Export state before showing content
-    call a11y_export
 
     # Prepare menu items for export
     python:
+        current_narrative = "You are in a room. There is an object here."
         menu_items = [
             {
                 "caption": "Interact with object",
@@ -79,14 +82,27 @@ label scene_room:
     # Export state with choices
     call a11y_export
     
-    menu:
-        "Interact with object":
+    if AGENT_MODE:
+        # Agent模式：等待AI决策
+        call a11y_wait_for_agent
+        $ choice_index = _return
+        
+        if choice_index == 0:
             $ choice_history.append("interact_room")
             jump room_interact
-        
-        "Ignore object":
+        else:
             $ choice_history.append("ignore_room")
             jump room_ignore
+    else:
+        # 手动模式：显示菜单
+        menu:
+            "Interact with object":
+                $ choice_history.append("interact_room")
+                jump room_interact
+            
+            "Ignore object":
+                $ choice_history.append("ignore_room")
+                jump room_ignore
 
 label room_interact:
     "You touch the object."
@@ -101,7 +117,6 @@ label room_ignore:
 label scene_crossroad:
     
     $ current_scene_id = "crossroad"
-    call a11y_export
     
     scene bg black
     
@@ -109,6 +124,7 @@ label scene_crossroad:
     "Three paths lie ahead."
     
     python:
+        current_narrative = "You arrive at a crossroad. Three paths lie ahead."
         menu_items = [
             {"caption": "Go left", "semantic": "explore_path_a", "cognitive_load": "low"},
             {"caption": "Go right", "semantic": "explore_path_b", "cognitive_load": "low"},
@@ -117,30 +133,48 @@ label scene_crossroad:
     
     call a11y_export
     
-    menu:
-        "Go left":
+    if AGENT_MODE:
+        # Agent模式：等待AI决策
+        call a11y_wait_for_agent
+        $ choice_index = _return
+        
+        if choice_index == 0:
             $ choice_history.append("path_left")
             "You walk into darkness."
             jump scene_echo
-        
-        "Go right":
+        elif choice_index == 1:
             $ choice_history.append("path_right")
             "You walk into light."
             jump scene_echo
-        
-        "Stay here":
+        else:
             $ choice_history.append("path_stay")
             "You wait."
             pause 2.0
             jump scene_echo
+    else:
+        # 手动模式：显示菜单
+        menu:
+            "Go left":
+                $ choice_history.append("path_left")
+                "You walk into darkness."
+                jump scene_echo
+            
+            "Go right":
+                $ choice_history.append("path_right")
+                "You walk into light."
+                jump scene_echo
+            
+            "Stay here":
+                $ choice_history.append("path_stay")
+                "You wait."
+                pause 2.0
+                jump scene_echo
 
 # Scene 3: The Echo
 label scene_echo:
     
     $ current_scene_id = "echo"
     $ current_narrative = "You return to a familiar place."
-    
-    call a11y_export
     
     scene bg gray
     
@@ -161,12 +195,22 @@ label scene_echo:
     
     call a11y_export
     
-    menu:
-        "Finish":
-            jump end
+    if AGENT_MODE:
+        # Agent模式：等待AI决策
+        call a11y_wait_for_agent
+        $ choice_index = _return
+        
+        jump end
+    else:
+        # 手动模式：显示菜单
+        menu:
+            "Finish":
+                jump end
 
 label end:
     $ current_scene_id = "end"
+    $ current_narrative = "Demo complete. Agent behavior logged."
+    $ menu_items = []
     call a11y_export
     
     "Demo complete."
