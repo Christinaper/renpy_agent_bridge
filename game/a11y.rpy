@@ -15,8 +15,6 @@ init python:
         
         def __init__(self):
             self.version = "0.1"
-            # self.export_dir = "game/exports"
-            # self.export_dir = r"D:\02_Dev\Projects\Games\a11y_renpy_bridge\game\exports"
             self.export_dir = os.path.join(renpy.config.gamedir, "exports")
             self.ensure_export_dir()
         
@@ -62,7 +60,7 @@ init python:
         def _export_narrative(self):
             """Export current dialogue/text"""
             return {
-                "current_text": getattr(store, "_last_say_what", ""),
+                "current_text": getattr(store, "current_narrative", ""),
                 "speaker": getattr(store, "_last_say_who", None)
             }
         
@@ -88,7 +86,8 @@ init python:
             """Export player progress and state"""
             return {
                 "history": getattr(store, "choice_history", []),
-                "current_label": renpy.get_return_stack()[-1] if renpy.get_return_stack() else "start"
+                # "current_label": renpy.get_return_stack()[-1] if renpy.get_return_stack() else "start"
+                "current_label": getattr(store, "current_scene_id", "unknown")
             }
         
         def save_to_file(self, filename="state.json"):
