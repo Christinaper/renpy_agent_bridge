@@ -24,3 +24,8 @@
 /dialogue.tab
 /dialogue.txt
 /strings.json
+
+# export
+/game/exports
+
+/game/__pycache__
