@@ -1,0 +1,39 @@
+{
+  "schema_version": "0.1",
+  "timestamp": "2026-05-14T15:56:43.319270",
+  "scene": {
+    "id": "end",
+    "name": "Unnamed Scene",
+    "description": "",
+    "accessibility": {
+      "visual_description": "",
+      "audio_cues": [],
+      "complexity": "low"
+    }
+  },
+  "narrative": {
+    "current_text": "Call this label to trigger export",
+    "speaker": null
+  },
+  "choices": [
+    {
+      "id": "choice_000",
+      "text": "Finish",
+      "accessibility": {
+        "semantic_label": "conclude",
+        "cognitive_load": "minimal"
+      }
+    }
+  ],
+  "player_state": {
+    "history": [
+      "interact_room",
+      "path_stay"
+    ],
+    "current_label": [
+      "game/script.rpy",
+      1779935670,
+      66
+    ]
+  }
+}
