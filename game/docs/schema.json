@@ -1,0 +1,118 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "A11y-RenPy-Bridge State Schema",
+    "version": "0.1",
+    "type": "object",
+    "required": ["schema_version", "scene", "narrative", "choices", "player_state"],
+
+    "properties": {
+        "schema_version": {
+            "type": "string",
+            "description": "Schema version for compatibility"
+        },
+
+        "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of state export"
+        },
+
+        "scene": {
+            "type": "object",
+            "required": ["id", "name"],
+            "properties": {
+            "id": {
+                "type": "string",
+                "description": "Unique scene identifier"
+            },
+            "name": {
+                "type": "string",
+                "description": "Human-readable scene name"
+            },
+            "description": {
+                "type": "string",
+                "description": "Semantic scene description for AI agents"
+            },
+            "accessibility": {
+                "type": "object",
+                "properties": {
+                "visual_description": {
+                    "type": "string",
+                    "description": "Detailed visual description for screen readers"
+                },
+                "audio_cues": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "List of audio cues in this scene"
+                },
+                "complexity": {
+                    "type": "string",
+                    "enum": ["minimal", "low", "medium", "high"],
+                    "description": "Cognitive complexity level"
+                }
+                }
+            }
+            }
+        },
+    
+        "narrative": {
+        "type": "object",
+        "properties": {
+            "current_text": {
+            "type": "string",
+            "description": "Currently displayed dialogue or narration"
+            },
+            "speaker": {
+            "type": ["string", "null"],
+            "description": "Character name or null for narration"
+            }
+        }
+        },
+        
+        "choices": {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "required": ["id", "text"],
+            "properties": {
+            "id": {
+                "type": "string",
+                "description": "Unique choice identifier"
+            },
+            "text": {
+                "type": "string",
+                "description": "Choice text displayed to player"
+            },
+            "accessibility": {
+                "type": "object",
+                "properties": {
+                "semantic_label": {
+                    "type": "string",
+                    "description": "Semantic meaning of this choice"
+                },
+                "cognitive_load": {
+                    "type": "string",
+                    "enum": ["minimal", "low", "medium", "high"],
+                    "description": "Mental effort required"
+                }
+                }
+            }
+            }
+        }
+        },
+        
+        "player_state": {
+        "type": "object",
+        "properties": {
+            "history": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of player choices (chronological)"
+            },
+            "current_label": {
+            "description": "Current execution label (Ren'Py internal)"
+            }
+        }
+        }
+    }
+}
