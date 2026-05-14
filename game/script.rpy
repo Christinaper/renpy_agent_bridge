@@ -24,6 +24,13 @@ init python:
             "visual_desc": "The same room, but the object has moved",
             "audio_cues": ["faint repetition"],
             "complexity": "low"
+        },
+        "end": {
+            "name": "The End",
+            "description": "Demo conclusion",
+            "visual_desc": "A final screen",
+            "audio_cues": [],
+            "complexity": "minimal"
         }
     }
     
@@ -46,14 +53,14 @@ label scene_room:
     
     $ current_scene_id = "room"
     
-    # Export state before showing content
-    call a11y_export
-    
     scene bg gray
     
     "You are in a room."
     "There is an object here."
     
+    # Export state before showing content
+    call a11y_export
+
     # Prepare menu items for export
     python:
         menu_items = [
@@ -131,6 +138,8 @@ label scene_crossroad:
 label scene_echo:
     
     $ current_scene_id = "echo"
+    $ current_narrative = "You return to a familiar place."
+    
     call a11y_export
     
     scene bg gray
