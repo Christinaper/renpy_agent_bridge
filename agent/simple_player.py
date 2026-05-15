@@ -1,25 +1,48 @@
 # agent/simple_player.py
 import json
+import os
 import re
 import subprocess
 import time
-import os
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-STATE_PATH = PROJECT_ROOT / "game" / "exports" / "state.json"
-CHOICE_PATH = PROJECT_ROOT / "game" / "exports" / "choice.txt"
+EXPORT_DIR = PROJECT_ROOT / "game" / "exports"
+STATE_PATH = EXPORT_DIR / "state.json"
+ACTION_PATH = EXPORT_DIR / "action.json"
+LEGACY_CHOICE_PATH = EXPORT_DIR / "choice.txt"
 MODEL = os.environ.get("OLLAMA_MODEL", "llama3.2:1b")
+
 
 def read_state():
     """读取游戏状态"""
-    with open(STATE_PATH, 'r', encoding='utf-8') as f:
+    with open(STATE_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def wait_for_state(last_turn_id=None):
+    """等待Ren'Py导出新的可用状态"""
+    while True:
+        try:
+            state = read_state()
+        except (FileNotFoundError, json.JSONDecodeError):
+            time.sleep(0.2)
+            continue
+
+        if "turn_id" not in state or "mode" not in state:
+            time.sleep(0.2)
+            continue
+
+        if last_turn_id is None or state.get("turn_id") != last_turn_id:
+            return state
+
+        time.sleep(0.2)
+
 
 def ask_ollama(prompt):
     """调用Ollama获取决策"""
     result = subprocess.run(
-        ['ollama', 'run', MODEL, prompt],
+        ["ollama", "run", MODEL, prompt],
         capture_output=True,
         text=True,
         timeout=60,
@@ -28,104 +51,134 @@ def ask_ollama(prompt):
         raise RuntimeError(result.stderr.strip() or "ollama run failed")
     return result.stdout.strip()
 
-def make_decision(state):
-    """
-    技术验证版决策：
-    - 不追求智能
-    - 只验证流程
-    """
-    choices = state['choices']
-    
-    # 构造最简prompt
-    prompt = f"""You are playing a text game.
 
-Scene: {state['scene']['name']}
-Text: {state['narrative']['current_text']}
+def parse_action_index(response, action_count):
+    """从LLM响应中解析动作下标"""
+    try:
+        data = json.loads(response)
+        idx = int(data.get("action_index", 0))
+        if 0 <= idx < action_count:
+            return idx
+    except Exception:
+        pass
 
-Available choices:
-"""
-    for i, choice in enumerate(choices):
-        prompt += f"{i}: {choice['text']}\n"
-    
-    prompt += "\nRespond with ONLY the number of your choice (0, 1, or 2). No explanation."
-    
-    # 调用LLM
-    response = ask_ollama(prompt)
-    
-    # 解析响应（容错）
-    match = re.search(r"\d+", response)
-    if match:
-        choice_num = int(match.group(0))
-        if 0 <= choice_num < len(choices):
-            return choice_num
-    
-    # 失败时随机选择
+    json_match = re.search(r"\{.*\}", response, flags=re.DOTALL)
+    if json_match:
+        try:
+            data = json.loads(json_match.group(0))
+            idx = int(data.get("action_index", 0))
+            if 0 <= idx < action_count:
+                return idx
+        except Exception:
+            pass
+
+    number_match = re.search(r"\d+", response)
+    if number_match:
+        idx = int(number_match.group(0))
+        if 0 <= idx < action_count:
+            return idx
+
     return 0
 
-def write_choice(choice_index):
-    """写入选择文件"""
-    CHOICE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with open(CHOICE_PATH, 'w') as f:
-        f.write(str(choice_index))
 
-def play_one_turn():
-    """执行一轮决策"""
-    state = read_state()
-    choices = state.get('choices', [])
+def choose_action(state):
+    """选择一个语义动作。单一advance动作无需调用LLM。"""
+    actions = state.get("actions", [])
+    if not actions:
+        return None
 
-    if not choices:
-        print(f"\n=== {state['scene']['name']} ===")
-        print("No choices available. Game may be finished.")
-        return False
-    
-    print(f"\n=== {state['scene']['name']} ===")
-    print(f"Text: {state['narrative']['current_text']}")
-    print(f"Choices: {[c['text'] for c in choices]}")
-    
-    decision = make_decision(state)
-    
-    print(f"Agent chose: {decision} - {choices[decision]['text']}")
-    
-    write_choice(decision)
-    print("Choice written. Waiting for Ren'Py...")
-    return True
+    if len(actions) == 1 and actions[0].get("type") == "advance":
+        return actions[0]
 
-def wait_for_next_state(last_timestamp):
-    """等待Ren'Py消费选择并导出下一帧状态"""
-    start = time.time()
-    while time.time() - start < 45:
-        if CHOICE_PATH.exists():
-            time.sleep(0.2)
-            continue
+    prompt = f"""You are playing a Ren'Py game through an accessibility interface.
+Choose exactly one available action.
 
-        try:
-            state = read_state()
-        except (FileNotFoundError, json.JSONDecodeError):
-            time.sleep(0.2)
-            continue
+Scene: {state['scene']['name']}
+Text: {state['narrative'].get('current_text', '')}
 
-        if state.get("timestamp") != last_timestamp:
-            return True
+Actions:
+"""
+    for idx, action in enumerate(actions):
+        semantic = action.get("semantic_label", "")
+        suffix = f" [{semantic}]" if semantic else ""
+        prompt += f"{idx}. {action.get('text', action.get('id', ''))}{suffix}\n"
 
-        time.sleep(0.2)
+    prompt += '\nRespond with JSON only: {"action_index": 0}'
 
-    return False
+    response = ask_ollama(prompt)
+    action_index = parse_action_index(response, len(actions))
+    return actions[action_index]
+
+
+def write_action(turn_id, action):
+    """原子写入Agent动作"""
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "turn_id": turn_id,
+        "action": {
+            "id": action.get("id"),
+            "type": action.get("type"),
+        },
+    }
+
+    if action.get("type") == "choice":
+        payload["action"]["index"] = action.get("index", 0)
+
+    tmp_path = ACTION_PATH.with_suffix(".json.tmp")
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2, ensure_ascii=False)
+    os.replace(tmp_path, ACTION_PATH)
+
+
+def clear_legacy_choice_file():
+    """避免旧choice.txt干扰0.2协议观察"""
+    if LEGACY_CHOICE_PATH.exists():
+        LEGACY_CHOICE_PATH.unlink()
+
+
+def describe_state(state):
+    scene = state.get("scene", {})
+    narrative = state.get("narrative", {})
+    actions = state.get("actions", [])
+
+    print(f"\n=== turn {state.get('turn_id')} | {scene.get('name', 'Unknown')} ===")
+    print(f"Mode: {state.get('mode')}")
+    print(f"Text: {narrative.get('current_text', '')}")
+    print(f"Actions: {[a.get('text', a.get('id')) for a in actions]}")
+
 
 def play_loop():
-    """持续游玩，直到游戏导出无选项状态或等待超时"""
+    """持续游玩，直到Ren'Py导出finished状态"""
+    clear_legacy_choice_file()
+
     print(f"Using Ollama model: {MODEL}")
     print(f"State: {STATE_PATH}")
+    print(f"Action: {ACTION_PATH}")
+
+    last_turn_id = None
 
     while True:
-        state = read_state()
-        last_timestamp = state.get("timestamp")
+        state = wait_for_state(last_turn_id)
+        describe_state(state)
 
-        if not play_one_turn():
+        mode = state.get("mode")
+        if mode == "finished":
+            print("Game finished.")
             break
 
-        if not wait_for_next_state(last_timestamp):
-            print("Timed out waiting for Ren'Py to advance.")
+        if mode != "awaiting_action":
+            last_turn_id = state.get("turn_id")
+            continue
+
+        action = choose_action(state)
+        if action is None:
+            print("No available actions. Stopping.")
             break
+
+        print(f"Agent action: {action.get('type')} - {action.get('text', action.get('id'))}")
+        write_action(state["turn_id"], action)
+        last_turn_id = state.get("turn_id")
+
 
 if __name__ == "__main__":
     play_loop()

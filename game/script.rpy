@@ -38,6 +38,7 @@ init python:
     
     # Global state
     current_scene_id = "room"
+    current_speaker = None
     current_narrative = ""
     choice_history = []
     menu_items = []
@@ -46,7 +47,9 @@ init python:
 label start:
     
     # Initialize
+    call a11y_reset_session
     $ current_scene_id = "room"
+    $ current_speaker = None
     $ current_narrative = ""
     $ choice_history = []
     $ menu_items = []
@@ -60,13 +63,11 @@ label scene_room:
     
     scene bg gray
     
-    "You are in a room."
-    "There is an object here."
+    call agent_say(None, "You are in a room.")
+    call agent_say(None, "There is an object here.")
 
-    # Prepare menu items for export
     python:
-        current_narrative = "You are in a room. There is an object here."
-        menu_items = [
+        room_choices = [
             {
                 "caption": "Interact with object",
                 "semantic": "engage",
@@ -79,12 +80,8 @@ label scene_room:
             }
         ]
     
-    # Export state with choices
-    call a11y_export
-    
     if AGENT_MODE:
-        # Agent模式：等待AI决策
-        call a11y_wait_for_agent
+        call agent_choice(room_choices)
         $ choice_index = _return
         
         if choice_index == 0:
@@ -105,12 +102,12 @@ label scene_room:
                 jump room_ignore
 
 label room_interact:
-    "You touch the object."
-    "It feels cold."
+    call agent_say(None, "You touch the object.")
+    call agent_say(None, "It feels cold.")
     jump scene_crossroad
 
 label room_ignore:
-    "You leave the object alone."
+    call agent_say(None, "You leave the object alone.")
     jump scene_crossroad
 
 # Scene 2: The Crossroad
@@ -120,36 +117,31 @@ label scene_crossroad:
     
     scene bg black
     
-    "You arrive at a crossroad."
-    "Three paths lie ahead."
+    call agent_say(None, "You arrive at a crossroad.")
+    call agent_say(None, "Three paths lie ahead.")
     
     python:
-        current_narrative = "You arrive at a crossroad. Three paths lie ahead."
-        menu_items = [
+        crossroad_choices = [
             {"caption": "Go left", "semantic": "explore_path_a", "cognitive_load": "low"},
             {"caption": "Go right", "semantic": "explore_path_b", "cognitive_load": "low"},
             {"caption": "Stay here", "semantic": "wait", "cognitive_load": "minimal"}
         ]
     
-    call a11y_export
-    
     if AGENT_MODE:
-        # Agent模式：等待AI决策
-        call a11y_wait_for_agent
+        call agent_choice(crossroad_choices)
         $ choice_index = _return
         
         if choice_index == 0:
             $ choice_history.append("path_left")
-            "You walk into darkness."
+            call agent_say(None, "You walk into darkness.")
             jump scene_echo
         elif choice_index == 1:
             $ choice_history.append("path_right")
-            "You walk into light."
+            call agent_say(None, "You walk into light.")
             jump scene_echo
         else:
             $ choice_history.append("path_stay")
-            "You wait."
-            pause 2.0
+            call agent_say(None, "You wait.")
             jump scene_echo
     else:
         # 手动模式：显示菜单
@@ -174,30 +166,27 @@ label scene_crossroad:
 label scene_echo:
     
     $ current_scene_id = "echo"
-    $ current_narrative = "You return to a familiar place."
     
     scene bg gray
     
-    "You return to a familiar place."
+    call agent_say(None, "You return to a familiar place.")
     
     # Reference previous choices
     if "interact_room" in choice_history:
-        "The object remembers you."
+        call agent_say(None, "The object remembers you.")
     else:
-        "The object is still here."
+        call agent_say(None, "The object is still here.")
     
-    "Your path: [choice_history]"
+    $ path_text = "Your path: " + str(choice_history)
+    call agent_say(None, path_text)
     
     python:
-        menu_items = [
+        finish_choices = [
             {"caption": "Finish", "semantic": "conclude", "cognitive_load": "minimal"}
         ]
     
-    call a11y_export
-    
     if AGENT_MODE:
-        # Agent模式：等待AI决策
-        call a11y_wait_for_agent
+        call agent_choice(finish_choices)
         $ choice_index = _return
         
         jump end
@@ -209,11 +198,8 @@ label scene_echo:
 
 label end:
     $ current_scene_id = "end"
-    $ current_narrative = "Demo complete. Agent behavior logged."
-    $ menu_items = []
-    call a11y_export
-    
-    "Demo complete."
-    "Agent behavior logged."
+    call agent_say(None, "Demo complete.")
+    call agent_say(None, "Agent behavior logged.")
+    call a11y_finish
     
     return
