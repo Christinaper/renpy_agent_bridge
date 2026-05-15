@@ -198,6 +198,7 @@ label scene_echo:
 
 label end:
     $ current_scene_id = "end"
+    
     call agent_say(None, "Demo complete.")
     call agent_say(None, "Agent behavior logged.")
     call a11y_finish
