@@ -65,7 +65,7 @@ game/exports/action.json
 Schema:
 
 ```text
-game/docs/schema.json
+docs/schema.json
 ```
 
 ## State Shape
@@ -139,9 +139,9 @@ Choice:
 - `game/a11y.rpy`: bridge runtime, exporter, action consumer, `agent_say`, `agent_choice`, `a11y_finish`
 - `game/script.rpy`: 3-scene demo game
 - `agent/simple_player.py`: reference agent using Ollama
-- `game/docs/schema.json`: v0.2 schema
-- `game/docs/v0.2-validation.md`: validation notes
-- `game/docs/v0.2-validation.zh.md`: Chinese validation notes
+- `docs/schema.json`: v0.2 schema
+- `docs/v0.2-validation.md`: validation notes
+- `docs/v0.2-validation.zh.md`: Chinese validation notes
 
 ## Reproduction
 
@@ -227,6 +227,6 @@ Richer accessibility semantics, authoring tools, multi-engine support, and real 
 
 ## Companion Documents
 
-- Chinese handoff: `game/docs/handoff-v0.2.zh.md`
-- English validation: `game/docs/v0.2-validation.md`
-- Chinese validation: `game/docs/v0.2-validation.zh.md`
+- Chinese handoff: `docs/handoff-v0.2.zh.md`
+- English validation: `docs/v0.2-validation.md`
+- Chinese validation: `docs/v0.2-validation.zh.md`

@@ -46,6 +46,11 @@ logs/
 *.tmp
 *.bak
 
+# Keep docs and scratch scripts outside the Ren'Py game tree.
+# Ren'Py recursively scans game/**/*.rpy, so accidental copies here can break label indexing.
+/game/docs/
+/game/tmp/
+
 # Error, log, and output files.
 /errors.txt
 /files.txt

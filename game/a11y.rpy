@@ -1,3 +1,4 @@
+# game/a11y.rpy
 # A11y-RenPy-Bridge: Accessibility Export Module
 # Version: 0.2
 # Purpose: Export semantic game state and consume semantic agent actions.
@@ -7,10 +8,12 @@ init python:
     import os
     import time
     from datetime import datetime
+    # import uuid
 
     a11y_turn_id = 0
     a11y_mode = "idle"
     current_actions = []
+    # session_id = str(uuid.uuid4())[:8]  # 例如: "a3f4b2c1"
 
     class A11yExporter:
         """

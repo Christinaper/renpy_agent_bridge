@@ -1,4 +1,5 @@
-﻿# A11y-RenPy-Bridge Demo Game
+﻿# game/script.rpy
+# A11y-RenPy-Bridge Demo Game
 # Three abstract scenes for technical validation
 
 define AGENT_MODE = True  # 设为False恢复手动模式

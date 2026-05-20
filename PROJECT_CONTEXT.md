@@ -49,11 +49,11 @@ v0.2 还不是：
 1. `game/a11y.rpy` - Ren'Py 侧桥接运行时
 2. `game/script.rpy` - 3 场景 demo
 3. `agent/simple_player.py` - Ollama 参考 Agent
-4. `game/docs/handoff-v0.2.md` - 英文 canonical handoff
-5. `game/docs/handoff-v0.2.zh.md` - 中文 handoff
-6. `game/docs/v0.2-validation.md` - 英文验证记录
-7. `game/docs/v0.2-validation.zh.md` - 中文验证记录
-8. `game/docs/schema.json` - v0.2 JSON schema
+4. `docs/handoff-v0.2.md` - 英文 canonical handoff
+5. `docs/handoff-v0.2.zh.md` - 中文 handoff
+6. `docs/v0.2-validation.md` - 英文验证记录
+7. `docs/v0.2-validation.zh.md` - 中文验证记录
+8. `docs/schema.json` - v0.2 JSON schema
 
 ---
 
@@ -90,6 +90,20 @@ Ren'Py runtime
 3. **缺少 session_id** - Agent 可能读到上一轮残留 state。
 4. **错误恢复弱** - Ollama 超时、JSON 异常等还没有完整 retry/fallback。
 5. **choice 上下文不够干净** - choice turn 会复用上一句 `narrative.current_text` 作为上下文。
+
+---
+
+## Ren'Py 文件索引注意事项
+
+Ren'Py 会递归扫描 `game/` 下的 `.rpy` 文件。
+
+因此不要把临时脚本、备份脚本或文档草稿放到 `game/docs/`、`game/tmp/` 等子目录里。比如 `game/docs/copy.rpy` 会被当作正式脚本加载，可能造成：
+
+- `label start` / `label end` 重复定义
+- 脚本索引混乱
+- 启动时报 `LabelNotFound: could not find label 'start'`
+
+文档应放在根目录 `docs/`，临时文件应放在根目录 `tmp/` 或仓库外。
 
 ---
 

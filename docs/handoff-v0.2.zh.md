@@ -65,7 +65,7 @@ game/exports/action.json
 Schema：
 
 ```text
-game/docs/schema.json
+docs/schema.json
 ```
 
 ## state.json 形态
@@ -139,9 +139,9 @@ game/docs/schema.json
 - `game/a11y.rpy`: 桥接运行时、状态导出、动作消费、`agent_say`、`agent_choice`、`a11y_finish`
 - `game/script.rpy`: 3 场景 demo
 - `agent/simple_player.py`: 使用 Ollama 的参考 Agent
-- `game/docs/schema.json`: v0.2 schema
-- `game/docs/v0.2-validation.md`: 英文验证记录
-- `game/docs/v0.2-validation.zh.md`: 中文验证记录
+- `docs/schema.json`: v0.2 schema
+- `docs/v0.2-validation.md`: 英文验证记录
+- `docs/v0.2-validation.zh.md`: 中文验证记录
 
 ## 复现方式
 
@@ -227,6 +227,6 @@ Semantic JSON Loop Proof Validated
 
 ## 对应文档
 
-- 英文 handoff: `game/docs/handoff-v0.2.md`
-- 英文验证记录: `game/docs/v0.2-validation.md`
-- 中文验证记录: `game/docs/v0.2-validation.zh.md`
+- 英文 handoff: `docs/handoff-v0.2.md`
+- 英文验证记录: `docs/v0.2-validation.md`
+- 中文验证记录: `docs/v0.2-validation.zh.md`

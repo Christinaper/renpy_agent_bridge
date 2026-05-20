@@ -53,11 +53,11 @@ Validation result:
 
 Full reports:
 
-- English handoff: [game/docs/handoff-v0.2.md](game/docs/handoff-v0.2.md)
-- Chinese handoff: [game/docs/handoff-v0.2.zh.md](game/docs/handoff-v0.2.zh.md)
-- English validation: [game/docs/v0.2-validation.md](game/docs/v0.2-validation.md)
-- Chinese validation: [game/docs/v0.2-validation.zh.md](game/docs/v0.2-validation.zh.md)
-- Schema: [game/docs/schema.json](game/docs/schema.json)
+- English handoff: [docs/handoff-v0.2.md](docs/handoff-v0.2.md)
+- Chinese handoff: [docs/handoff-v0.2.zh.md](docs/handoff-v0.2.zh.md)
+- English validation: [docs/v0.2-validation.md](docs/v0.2-validation.md)
+- Chinese validation: [docs/v0.2-validation.zh.md](docs/v0.2-validation.zh.md)
+- Schema: [docs/schema.json](docs/schema.json)
 
 ## Repository Layout
 
@@ -68,8 +68,8 @@ a11y_renpy_bridge/
 ├── game/
 │   ├── a11y.rpy                # Bridge runtime
 │   ├── script.rpy              # Demo game
-│   ├── docs/                   # Protocol and validation docs
 │   └── exports/                # Runtime JSON files, ignored by git
+├── docs/                       # Protocol and validation docs
 ├── PROJECT_CONTEXT.md          # Short Chinese project context
 └── README.md
 ```
@@ -88,6 +88,8 @@ Agent side:
 - `llama3.2:1b` model, or another model via `OLLAMA_MODEL`
 
 The reference agent currently uses only the Python standard library. There is no `requirements.txt`.
+
+Keep documentation outside `game/`. Ren'Py recursively scans `game/` for `.rpy` scripts, so scratch copies such as `game/docs/copy.rpy` can corrupt script indexing.
 
 ## Run The v0.2 Proof
 
