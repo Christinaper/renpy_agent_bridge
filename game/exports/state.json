@@ -1,39 +1,29 @@
 {
-  "schema_version": "0.1",
-  "timestamp": "2026-05-14T15:56:43.319270",
+  "schema_version": "0.2",
+  "timestamp": "2026-05-15T16:45:45.803546",
+  "turn_id": 16,
+  "mode": "finished",
   "scene": {
     "id": "end",
-    "name": "Unnamed Scene",
-    "description": "",
+    "name": "The End",
+    "description": "Demo conclusion",
     "accessibility": {
-      "visual_description": "",
+      "visual_description": "A final screen",
       "audio_cues": [],
-      "complexity": "low"
+      "complexity": "minimal"
     }
   },
   "narrative": {
-    "current_text": "Call this label to trigger export",
+    "current_text": "Agent behavior logged.",
     "speaker": null
   },
-  "choices": [
-    {
-      "id": "choice_000",
-      "text": "Finish",
-      "accessibility": {
-        "semantic_label": "conclude",
-        "cognitive_load": "minimal"
-      }
-    }
-  ],
+  "actions": [],
+  "choices": [],
   "player_state": {
     "history": [
       "interact_room",
-      "path_stay"
+      "path_left"
     ],
-    "current_label": [
-      "game/script.rpy",
-      1779935670,
-      66
-    ]
+    "current_label": "end"
   }
 }
