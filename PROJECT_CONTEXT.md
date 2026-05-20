@@ -1,151 +1,162 @@
 # A11y-RenPy-Bridge - Project Context
 
-**当前版本:** v0.2.0  
-**最后更新:** 2026-05-15  
-**状态:** 技术验证完成，可发布
+**当前版本:** v0.2.0
+**最后更新:** 2026-05-20
+**当前阶段:** Bridge Prototype / Semantic JSON Loop Proof
+**状态:** 技术验证完成，但不是最终形态
 
 ---
 
-## 快速理解这个项目
+## 一句话
 
-### 一句话
-让AI Agent通过JSON（而非像素）玩Ren'Py视觉小说游戏。
+这个项目验证一个命题：
 
-### 核心成就（v0.2）
-- ✅ 16个turn完整通关
-- ✅ LLM做决策（llama3.2:1b via Ollama）
-- ✅ 100%成功率，无需人工干预
-- ✅ 协议简洁：state.json ↔ action.json
+> 游戏应当原生暴露语义状态与可执行动作，而不是让辅助技术在屏幕像素上二次猜测游戏。
 
-### 关键文件
-1. **game/a11y.rpy** - Ren'Py侧协议实现
-2. **agent/simple_player.py** - Agent侧实现
-3. **docs/handoff-v0.2.md** - 完整技术报告
-4. **docs/schema.json** - JSON格式定义
+当前 v0.2 不是“让 LLM 玩一个 Ren'Py demo”的终点，而是证明 **Ren'Py 可以导出 JSON，Agent 可以读写 JSON，游戏可以被语义动作推进到 finished**。
 
 ---
 
-## 技术栈
+## 当前已验证
 
-| 组件 | 技术 | 版本 |
-|------|------|------|
-| 游戏引擎 | Ren'Py | 8.3+ |
-| Agent语言 | Python | 3.8+ |
-| LLM运行时 | Ollama | latest |
-| LLM模型 | llama3.2:1b | - |
-| 通信方式 | 文件轮询 | JSON |
+- 3 个场景完整通关
+- 16 个 turn 单调推进
+- 13 个 `advance` 动作推进对白
+- 3 个 `choice` 动作完成菜单选择
+- 最终导出 `mode: "finished"`
+- 不依赖视觉输入、OCR、鼠标坐标或 UI 自动化
+
+这说明 **JSON semantic control loop 成立**。
+
+---
+
+## 当前不是
+
+v0.2 还不是：
+
+- 生产级无障碍客户端
+- 屏幕阅读器集成
+- 稳定运行时协议
+- 通用游戏 Agent 框架
+- 完整 A11y 标准
+
+它是第一阶段的桥接原型。
+
+---
+
+## 关键文件
+
+1. `game/a11y.rpy` - Ren'Py 侧桥接运行时
+2. `game/script.rpy` - 3 场景 demo
+3. `agent/simple_player.py` - Ollama 参考 Agent
+4. `game/docs/handoff-v0.2.md` - 英文 canonical handoff
+5. `game/docs/handoff-v0.2.zh.md` - 中文 handoff
+6. `game/docs/v0.2-validation.md` - 英文验证记录
+7. `game/docs/v0.2-validation.zh.md` - 中文验证记录
+8. `game/docs/schema.json` - v0.2 JSON schema
 
 ---
 
 ## 架构速览
 
-Ren'Py → state.json → Agent读取 → LLM决策 →
-Agent写action.json → Ren'Py消费 → 推进游戏 → 循环
+```text
+Ren'Py runtime
+  -> writes game/exports/state.json
+Agent
+  -> reads state.json
+  -> chooses one action
+  -> writes game/exports/action.json
+Ren'Py runtime
+  -> consumes action.json
+  -> advances game
+  -> exports next state
+```
 
-**关键机制:**
-- `turn_id`: 握手同步
-- `mode`: 状态机（idle/awaiting_action/finished）
-- `actions[]`: 可用动作列表（advance/choice）
+核心字段：
+
+- `turn_id`: 同步当前 turn
+- `mode`: `idle`, `awaiting_action`, `finished`
+- `actions[]`: 当前合法语义动作
+- `narrative.current_text`: 当前叙事文本或选择上下文
 
 ---
 
-## 已知问题（v0.2可接受）
+## v0.2 已知限制
 
-1. **UI阻塞** - `wait_for_action()`阻塞主线程
-2. **手动清理** - 每次运行前需删除exports/*
-3. **narrative重复** - choice点的current_text被清空
+这些限制不阻塞 v0.2 的验证结论：
 
-详见 `docs/handoff-v0.2.md#已知限制`
+1. **UI 阻塞** - 当前等待 `action.json` 的逻辑会阻塞 Ren'Py 主线程。
+2. **需要清理旧状态** - 运行前应删除 `game/exports/state.json` 和 `action.json`。
+3. **缺少 session_id** - Agent 可能读到上一轮残留 state。
+4. **错误恢复弱** - Ollama 超时、JSON 异常等还没有完整 retry/fallback。
+5. **choice 上下文不够干净** - choice turn 会复用上一句 `narrative.current_text` 作为上下文。
 
 ---
 
-## 下一步方向（v0.3候选）
+## v0.3 建议边界
 
-### 推荐优先级
+v0.3 不应急着扩展成完整 A11y 标准，推荐聚焦：
 
-**P0 (必须):**
-- Session ID隔离（解决手动清理问题）
-- choice_context字段（数据质量）
-
-**P1 (应该):**
-- 非阻塞UI（用户体验）
-- 错误恢复（鲁棒性）
-
-**P2 (可选):**
+- `session_id`
+- 非阻塞等待
 - Debug overlay
-- Web API替代文件轮询
+- timeout / error mode
+- Agent retry / fallback
+- choice context 字段
 
-详见 `docs/v0.3-roadmap.md`
+主题可以定为：
 
----
-
-## 开发环境
-
-**我的配置:**
-- Windows 11 宿主
-- Ren'Py在 `D:\02_Dev\Projects\Games\a11y_renpy_bridge`
-- Agent在WSL2 Ubuntu
-- Ollama在WSL2
-
-**文件路径映射:**
-
-Windows: D:\02_Dev\Projects\Games\a11y_renpy_bridge\game\exports
-WSL2:    /mnt/d/02_Dev/Projects/Games/a11y_renpy_bridge/game/exports
-
----
-
-## 快速命令
-
-```bash
-# 清空状态
-rm -rf game/exports/*
-
-# 启动游戏（Windows）
-.\renpy.exe game
-
-# 启动Agent（WSL2）
-cd agent && python3 simple_player.py
-
-# 查看最终状态
-cat game/exports/state.json | grep -o '"mode": "[^"]*"'
+```text
+v0.3 Runtime Health
 ```
 
 ---
 
-## 待办事项
+## A11y 方向
 
-### 立即
-- [ ] 发布到GitHub
-- [ ] 写README
-- [ ] 录制demo视频
+正确的长期方向不是让外部工具看图猜游戏，而是在 infra 层暴露：
 
-### 本周
-- [ ] 收集相关文献
-- [ ] 规划v0.3技术路线
-- [ ] （可选）写博客
+- 发生了什么
+- 当前可做什么
+- 每个动作的语义是什么
+- 玩家状态如何变化
 
-### 下周+
-- [ ] 决定是否做v0.3
-- [ ] 或转向论文写作
+LLM 只是一个参考客户端。未来同一接口应能服务 screen reader、keyboard-only client、switch-access client、test bot 和认知辅助工具。
 
 ---
 
-## 联系人
+## 快速运行
 
-**主要开发者:** saki
-**项目开始:** 2026-05-08  
-**当前阶段:** Week 2完成  
+清空旧状态：
+
+```bash
+rm -f /mnt/d/02_Dev/Projects/Games/a11y_renpy_bridge/game/exports/state.json
+rm -f /mnt/d/02_Dev/Projects/Games/a11y_renpy_bridge/game/exports/action.json
+rm -f /mnt/d/02_Dev/Projects/Games/a11y_renpy_bridge/game/exports/choice.txt
+```
+
+启动 Ren'Py 项目后，在 WSL2 中运行：
+
+```bash
+cd /mnt/d/02_Dev/Projects/Games/a11y_renpy_bridge/agent
+python3 simple_player.py
+```
+
+期望结束：
+
+```text
+Mode: finished
+Game finished.
+```
 
 ---
 
-## 给下一个AI助手的话
+## 给下一个 AI 助手
 
-这个项目的核心价值是**证明非像素接口可行**，不是做最强AI。
+不要把 v0.2 说成最终产品。它是 **Bridge Prototype**。
 
-v0.2已经完成技术验证，不要被功能诱惑过度设计。
+不要把项目定位成“LLM 玩游戏”。更准确的定位是：
 
-如果要做v0.3，先问："这对发论文/开源/找工作有帮助吗？"
+> Semantic game accessibility interface prototype.
 
-**优先级:** 文档 > 演示 > 新功能
-
-爱这个项目的人。❤️
+优先保持阶段边界清楚：文档、验证、演示先于新功能。

@@ -1,211 +1,127 @@
-# 🎮 A11y-RenPy-Bridge
+# A11y-RenPy-Bridge
 
-**Make visual novels accessible to AI agents and assistive technologies through semantic JSON interfaces.**
+**A bridge prototype for game accessibility infrastructure.**
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/yourusername/a11y-renpy-bridge/releases)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Ren'Py](https://img.shields.io/badge/Ren'Py-8.3%2B-red.svg)](https://www.renpy.org/)
+This project is not trying to prove that an LLM can play one Ren'Py demo. It validates a broader hypothesis:
 
-> 🎯 **Core Idea:** Instead of using pixel-based vision and UI automation, expose game narrative and player actions as structured JSON, enabling LLM agents to play visual novels through semantic understanding.
+> Games should natively expose semantic state and executable actions, so assistive technologies do not have to guess the game through screen pixels.
 
----
+v0.2 proves a narrow but important loop: a Ren'Py game exports semantic JSON, an external agent reads it, writes a structured action, and the game advances to completion without vision, OCR, mouse coordinates, or UI automation.
 
-## 🌟 What This Is
+## Status
 
-A **technical validation** that proves visual novels can be played entirely through a JSON API, without:
-- ❌ Computer vision
-- ❌ Screen reading
-- ❌ Mouse/keyboard automation
-- ❌ Pixel-level input
+**Current milestone:** v0.2 Semantic JSON Loop Proof
+**Stage:** Bridge Prototype
+**Validated:** Yes, on a 3-scene Ren'Py demo with 16 turns
 
-Instead:
-- ✅ Game exports semantic state (scene, dialogue, available actions)
-- ✅ Agent reads JSON and makes decisions via LLM
-- ✅ Game consumes agent's choice and progresses
+This is not the final form of the project. It is the first bridge prototype: file-based JSON, one Ren'Py demo, one Ollama-backed reference agent.
 
-**Result:** Full playthrough of a 3-scene demo (16 turns) with 100% success rate.
+## Why This Matters
 
----
+Most game accessibility tooling is forced to work from the outside: inspect pixels, infer UI state, emulate clicks, and hope the screen did not change. That is fragile.
 
-## 🎬 Quick Demo
+This project explores a different direction:
 
-```bash
-# Terminal 1: Start Ren'Py game
-./renpy.exe game
+- The game runtime owns the truth.
+- The game exports semantic state.
+- The game exports valid actions.
+- Assistive clients choose from those actions.
 
-# Terminal 2: Start AI agent
-cd agent
-python3 simple_player.py
-```
+LLM play is only one reference client. The same interface should eventually support screen readers, keyboard-only clients, switch-access clients, test bots, cognitive assistance tools, and other accessibility clients.
 
-**Agent output:**
-=== turn 1 | The Room ===
-Text: You are in a room.
-Actions: ['Continue']
-Agent action: advance - Continue
-=== turn 3 | The Room ===
-Text:
-Actions: ['Interact with object', 'Ignore object']
-Agent action: choice - Interact with object
-...
-=== turn 16 | The End ===
-Mode: finished
-Game finished.
+## What v0.2 Proves
 
-**[📺 Watch full demo video](#)** *(TODO: add link)*
+The validated loop is:
 
----
+1. Ren'Py writes `game/exports/state.json`.
+2. Agent reads `turn_id`, `mode`, `scene`, `narrative`, and `actions`.
+3. Agent writes `game/exports/action.json`.
+4. Ren'Py consumes the action and advances.
+5. The loop repeats until Ren'Py exports `mode: "finished"`.
+6. Agent exits cleanly.
 
-## 🏗️ Architecture
-┌─────────────────┐
-│   Ren'Py Game   │
-│   (script.rpy)  │
-└────────┬────────┘
-│ exports
-↓
-state.json
-{
-"turn_id": 3,
-"mode": "awaiting_action",
-"scene": {...},
-"actions": [
-{"type": "choice", "text": "Interact", "index": 0},
-{"type": "choice", "text": "Ignore", "index": 1}
-]
-}
-│ reads
-↓
-┌─────────────────┐
-│   AI Agent      │
-│  (LLM decision) │
-└────────┬────────┘
-│ writes
-↓
-action.json
-{
-"turn_id": 3,
-"action": {"type": "choice", "index": 0}
-}
-│ consumes
-↓
-┌─────────────────┐
-│   Ren'Py Game   │
-│  (progresses)   │
-└─────────────────┘
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.
-
----
-
-## 📦 Installation
-
-### Prerequisites
-
-**Ren'Py side (Windows/Mac/Linux):**
-- [Ren'Py 8.3+](https://www.renpy.org/latest.html)
-
-**Agent side (Linux/WSL2):**
-- Python 3.8+
-- [Ollama](https://ollama.com/) with `llama3.2:1b` model
-
-### Setup
-
-```bash
-# 1. Clone repository
-git clone https://github.com/yourusername/a11y-renpy-bridge.git
-cd a11y-renpy-bridge
-
-# 2. Install Ollama (if not already)
-curl -fsSL https://ollama.com/install.sh | sh
-ollama pull llama3.2:1b
-
-# 3. Install Python dependencies
-cd agent
-pip install -r requirements.txt
-
-# 4. Clear exports directory (first run only)
-rm -rf game/exports/*
-mkdir -p game/exports
-```
-
----
-
-## 🚀 Usage
-
-### Step 1: Start Ren'Py Game
-
-**Option A: Via Ren'Py Launcher**
-1. Open Ren'Py Launcher
-2. Select `a11y-renpy-bridge` project
-3. Click "Launch Project"
-
-**Option B: Command Line**
-```bash
-# Windows
-.\renpy.exe game
-
-# Linux/Mac
-./renpy.sh game
-```
-
-### Step 2: Start AI Agent
-
-```bash
-cd agent
-python3 simple_player.py
-```
-
-### Step 3: Watch the Magic ✨
-
-The agent will:
-1. Read game state from `game/exports/state.json`
-2. Call Ollama to make decisions
-3. Write choices to `game/exports/action.json`
-4. Repeat until game finishes
-
-**Expected runtime:** 2-5 minutes (depends on LLM speed)
-
----
-
-## 📊 V0.2 Validation Results
+Validation result:
 
 | Metric | Result |
-|--------|--------|
-| **Total turns** | 16 |
-| **Advance actions** | 13 (auto-progress dialogue) |
-| **Choice actions** | 3 (LLM decisions) |
-| **Success rate** | 100% (no manual intervention) |
-| **Turn progression** | Monotonic (1→16, no gaps) |
-| **State machine** | Correct (awaiting_action → finished) |
-| **LLM calls** | 3 (only for choices, performance optimized) |
+| --- | --- |
+| Total turns | 16 |
+| Advance actions | 13 |
+| Choice actions | 3 |
+| Final mode | `finished` |
+| Pixel input | None |
+| UI automation | None |
 
-See [docs/handoff-v0.2.md](docs/handoff-v0.2.md) for full report.
+Full reports:
 
----
+- English handoff: [game/docs/handoff-v0.2.md](game/docs/handoff-v0.2.md)
+- Chinese handoff: [game/docs/handoff-v0.2.zh.md](game/docs/handoff-v0.2.zh.md)
+- English validation: [game/docs/v0.2-validation.md](game/docs/v0.2-validation.md)
+- Chinese validation: [game/docs/v0.2-validation.zh.md](game/docs/v0.2-validation.zh.md)
+- Schema: [game/docs/schema.json](game/docs/schema.json)
 
-## 🎯 Use Cases
+## Repository Layout
 
-### 1. Accessibility
-Enable screen reader users to play visual novels through semantic interfaces instead of OCR.
+```text
+a11y_renpy_bridge/
+├── agent/
+│   └── simple_player.py        # Reference agent using Ollama
+├── game/
+│   ├── a11y.rpy                # Bridge runtime
+│   ├── script.rpy              # Demo game
+│   ├── docs/                   # Protocol and validation docs
+│   └── exports/                # Runtime JSON files, ignored by git
+├── PROJECT_CONTEXT.md          # Short Chinese project context
+└── README.md
+```
 
-### 2. AI Research
-- Benchmark LLM narrative understanding
-- Study decision-making in story-driven games
-- Generate training data for game AI
+## Requirements
 
-### 3. Automated Testing
-Test game logic without manual playthrough or pixel-based automation.
+Ren'Py side:
 
-### 4. Content Creation
-Generate playthroughs for walkthroughs, reviews, or analysis.
+- Ren'Py 8.x
+- The demo project opened through the Ren'Py launcher or SDK
 
----
+Agent side:
 
-## 🛠️ Technical Details
+- Python 3.8+
+- Ollama
+- `llama3.2:1b` model, or another model via `OLLAMA_MODEL`
 
-### JSON Schema
+The reference agent currently uses only the Python standard library. There is no `requirements.txt`.
 
-**state.json:**
+## Run The v0.2 Proof
+
+Clear stale runtime files before each v0.2 run:
+
+```bash
+rm -f /mnt/d/02_Dev/Projects/Games/a11y_renpy_bridge/game/exports/state.json
+rm -f /mnt/d/02_Dev/Projects/Games/a11y_renpy_bridge/game/exports/action.json
+rm -f /mnt/d/02_Dev/Projects/Games/a11y_renpy_bridge/game/exports/choice.txt
+```
+
+Start the Ren'Py project from the Ren'Py launcher or your local SDK.
+
+Then run the agent from WSL2:
+
+```bash
+cd /mnt/d/02_Dev/Projects/Games/a11y_renpy_bridge/agent
+python3 simple_player.py
+```
+
+Expected final output:
+
+```text
+=== turn 16 | The End ===
+Mode: finished
+Text: Agent behavior logged.
+Actions: []
+Game finished.
+```
+
+## Protocol Snapshot
+
+`state.json`:
+
 ```json
 {
   "schema_version": "0.2",
@@ -213,11 +129,10 @@ Generate playthroughs for walkthroughs, reviews, or analysis.
   "mode": "awaiting_action",
   "scene": {
     "id": "room",
-    "name": "The Room",
-    "description": "A minimal space with one object"
+    "name": "The Room"
   },
   "narrative": {
-    "current_text": "",
+    "current_text": "There is an object here.",
     "speaker": null
   },
   "actions": [
@@ -225,153 +140,63 @@ Generate playthroughs for walkthroughs, reviews, or analysis.
       "id": "choice_000",
       "type": "choice",
       "index": 0,
-      "text": "Interact with object"
+      "text": "Interact with object",
+      "semantic_label": "engage"
     }
   ],
   "player_state": {
-    "history": ["interact_room"],
+    "history": [],
     "current_label": "room"
   }
 }
 ```
 
-Full schema: [docs/schema.json](docs/schema.json)
+`action.json`:
 
-### Action Types
-
-- **`advance`**: Progress dialogue (like clicking "Continue")
-- **`choice`**: Select from menu options (requires `index` field)
-
-### Agent Decision Logic
-
-```python
-# Performance optimization: skip LLM for single advance actions
-if len(actions) == 1 and actions[0]["type"] == "advance":
-    return actions[0]
-
-# Use LLM for choices
-prompt = f"""Scene: {scene_name}
-Available actions:
-0. {action_0_text}
-1. {action_1_text}
-
-Respond with JSON: {{"action_index": 0}}"""
-
-response = ask_ollama(prompt)
-```
-
-See [agent/simple_player.py](agent/simple_player.py) for full implementation.
-
----
-
-## ⚠️ Known Limitations (v0.2)
-
-### 🟡 UI Freeze During Turns
-**Issue:** Ren'Py window becomes unresponsive while waiting for agent  
-**Cause:** Blocking `time.sleep()` in main thread  
-**Impact:** Cosmetic only, functionality works fine  
-**Workaround:** Use separate terminal windows  
-**Fix planned:** v0.3 will use threading
-
-### 🟡 Manual Session Cleanup
-**Issue:** Must delete `game/exports/*` before each run  
-**Cause:** No session isolation  
-**Impact:** Inconvenient startup  
-**Workaround:** `rm -rf game/exports/*` before launch  
-**Fix planned:** v0.3 will add session IDs to filenames
-
-### 🟡 Empty narrative.current_text at Choice Points
-**Issue:** Turn 3 (choice) shows empty text to avoid duplication with Turn 2  
-**Impact:** Choice context not in JSON (but available in `actions[].text`)  
-**Fix planned:** v0.3 will add `choice_context.preceding_text` field
-
-See [docs/handoff-v0.2.md#known-limitations](docs/handoff-v0.2.md#known-limitations) for details.
-
----
-
-## 🗺️ Roadmap
-
-### ✅ v0.1 (Week 1)
-- [x] JSON export from Ren'Py
-- [x] 3-scene demo game
-- [x] Schema definition
-
-### ✅ v0.2 (Week 2)
-- [x] AI agent integration
-- [x] Full playthrough validation
-- [x] Turn-based synchronization
-
-### 🚧 v0.3 (Planned)
-- [ ] Non-blocking UI (threading)
-- [ ] Session ID isolation
-- [ ] `choice_context` field for richer context
-- [ ] Error recovery and retry logic
-- [ ] Debug overlay UI
-
-### 🔮 v0.4+ (Future)
-- [ ] Multi-game support (plugin system)
-- [ ] Web API instead of file polling
-- [ ] Real-time dashboard
-- [ ] Performance metrics
-
-See [docs/v0.3-roadmap.md](docs/v0.3-roadmap.md) for detailed plan.
-
----
-
-## 🤝 Contributing
-
-Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
-
-### Good First Issues
-- [ ] Add more test games (different genres)
-- [ ] Implement other LLM backends (GPT-4, Claude)
-- [ ] Create visualization tools for playthrough logs
-- [ ] Write tutorials for integrating with existing Ren'Py games
-
----
-
-## 📚 Citation
-
-If you use this in research, please cite:
-
-```bibtex
-@software{a11y_renpy_bridge_2026,
-  author = {Your Name},
-  title = {A11y-RenPy-Bridge: Semantic JSON Interface for Visual Novel Accessibility},
-  year = {2026},
-  url = {https://github.com/yourusername/a11y-renpy-bridge},
-  version = {0.2.0}
+```json
+{
+  "turn_id": 3,
+  "action": {
+    "id": "choice_000",
+    "type": "choice",
+    "index": 0
+  }
 }
 ```
 
----
+Action types in v0.2:
 
-## 📄 License
+- `advance`: continue dialogue
+- `choice`: select a menu option by `index`
 
-MIT License - see [LICENSE](LICENSE) file.
+## Known v0.2 Limits
 
----
+These do not invalidate the v0.2 proof:
 
-## 🙏 Acknowledgments
+- Ren'Py UI can appear frozen because the current wait loop blocks the main thread.
+- Stale `game/exports/*` files must be cleared before a clean run.
+- There is no `session_id`.
+- There is no robust Ollama retry/fallback policy.
+- Choice turns reuse the previous `narrative.current_text` as context, which is acceptable for the proof but should be improved for data quality.
+- The prototype only covers visual-novel style dialogue and menu choice actions.
 
-- [Ren'Py](https://www.renpy.org/) - Visual novel engine
-- [Ollama](https://ollama.com/) - Local LLM runtime
-- Inspired by accessibility research in interactive fiction
+## Next Stage
 
----
+Recommended v0.3 theme:
 
-## 📞 Contact
+**Runtime Health**
 
-- **Issues:** [GitHub Issues](https://github.com/yourusername/a11y-renpy-bridge/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/a11y-renpy-bridge/discussions)
-- **Email:** your.email@example.com
+Likely work:
 
----
+- Add `session_id`.
+- Replace blocking waits with Ren'Py-friendly non-blocking waits.
+- Add a debug overlay for `mode`, `turn_id`, text, and actions.
+- Add timeout/error modes.
+- Add basic agent retry/fallback.
+- Add richer choice context.
 
-## ⭐ Star History
+Richer accessibility semantics, authoring tools, and multi-engine support should come after the bridge runtime is healthy.
 
-If this project helps your research or development, please consider starring it!
+## License
 
----
-
-*Built with ❤️ for accessibility and AI research*
+License is not finalized in this repository yet.
