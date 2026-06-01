@@ -1,4 +1,4 @@
-54rrt# VISION: LLM-Enhanced Multi-Modal Access
+# VISION: LLM-Enhanced Multi-Modal Access
 
 ## 核心愿景
 
