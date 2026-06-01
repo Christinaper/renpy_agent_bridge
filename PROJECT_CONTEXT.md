@@ -1,4 +1,4 @@
-# A11y-RenPy-Bridge - Project Context
+# Agent-RenPy-Bridge - Project Context
 
 **当前版本:** v0.2.0
 **最后更新:** 2026-05-20
@@ -13,7 +13,9 @@
 
 > 游戏应当原生暴露语义状态与可执行动作，而不是让辅助技术在屏幕像素上二次猜测游戏。
 
-当前 v0.2 不是“让 LLM 玩一个 Ren'Py demo”的终点，而是证明 **Ren'Py 可以导出 JSON，Agent 可以读写 JSON，游戏可以被语义动作推进到 finished**。
+当前 v0.2 不是“让 LLM 玩一个 Ren'Py demo”的终点，而是证明 **Ren'Py 可以导出开发者标注的语义 JSON，Agent 可以读写 JSON，游戏可以被语义动作推进到 finished**。
+
+JSON 不是给人类直接消费的最终界面。它是给 LLM 或其他适配器层消费的语义真相。LLM 再把同一份语义转换成人类友好的输出形式。
 
 ---
 
@@ -39,6 +41,8 @@ v0.2 还不是：
 - 稳定运行时协议
 - 通用游戏 Agent 框架
 - 完整 A11y 标准
+- Ren'Py self-voicing 的替代品
+- WCAG 合规声明
 
 它是第一阶段的桥接原型。
 
@@ -54,6 +58,8 @@ v0.2 还不是：
 6. `docs/v0.2-validation.md` - 英文验证记录
 7. `docs/v0.2-validation.zh.md` - 中文验证记录
 8. `docs/schema.json` - v0.2 JSON schema
+9. `VISION.md` - LLM-Enhanced Multi-Modal Access 愿景
+10. `docs/v0.3-plan.md` - v0.3 Runtime Health 规划交接
 
 ---
 
@@ -135,7 +141,25 @@ v0.3 Runtime Health
 - 每个动作的语义是什么
 - 玩家状态如何变化
 
-LLM 只是一个参考客户端。未来同一接口应能服务 screen reader、keyboard-only client、switch-access client、test bot 和认知辅助工具。
+LLM 是适配器层和参考客户端。未来同一接口应能服务 screen reader、keyboard-only client、switch-access client、test bot、认知辅助工具，以及所有想要非视觉或低视觉负担体验的人。
+
+---
+
+## 容易被误解的点
+
+错误理解：
+
+- JSON 是给人类直接看的，所以“不如画面适合人类”。
+- 项目要替代现有 self-voicing。
+- v0.2 要符合 WCAG 或完整 A11y 标准。
+- LLM 玩 demo 就是项目终点。
+
+实际理解：
+
+- JSON 是给 LLM/adapter 消费的中间层。
+- JSON 来自开发者标注和运行时状态，不是 OCR 猜测。
+- LLM 把同一份语义转换成不同输出形式。
+- 当前只验证 Bridge Prototype，后续才扩展 runtime health、semantic depth 和 assistive clients。
 
 ---
 
@@ -174,3 +198,5 @@ Game finished.
 > Semantic game accessibility interface prototype.
 
 优先保持阶段边界清楚：文档、验证、演示先于新功能。
+
+下一步不是做“更会玩的 LLM”，而是做 `docs/v0.3-plan.md` 里定义的 Runtime Health。
