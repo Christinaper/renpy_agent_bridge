@@ -2,10 +2,15 @@
 # A11y-RenPy-Bridge Demo Game
 # Three abstract scenes for technical validation
 
-define AGENT_MODE = True  # 设为False恢复手动模式
-
 # Scene definitions
 init python:
+    import os
+
+    # 优先级：环境变量 > 默认值（True）
+    # 开发时：AGENT_MODE=0 renpy.sh game  → 手动模式
+    # 正常时：直接运行 → Agent 模式
+    AGENT_MODE = os.environ.get("RENPY_AGENT_MODE", "1").strip().lower() not in ("0", "false", "no")
+
     scenes = {
         "room": {
             "name": "The Room",
