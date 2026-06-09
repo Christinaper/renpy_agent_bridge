@@ -160,6 +160,92 @@ init python:
 
     a11y = A11yExporter()
 
+    class ActionWatcher:
+        """
+        在后台线程轮询 action 文件。
+        主线程通过 is_ready() 和 get_result() 获取结果。
+        不调用任何 renpy.* API。
+        """
+
+        def __init__(self, action_file, expected_turn_id, timeout=60.0):
+            self.action_file      = action_file
+            self.expected_turn_id = expected_turn_id
+            self.timeout          = timeout
+
+            self._result   = None   # 成功时的 action dict
+            self._error    = None   # 失败时的错误字符串
+            self._ready    = False
+            # self._thread   = None
+
+        def start(self):
+            t = threading.Thread(target=self._poll, daemon=True)
+            t.start()
+
+            # self._thread = threading.Thread(
+            #     target=self._poll,
+            #     daemon=True           # 游戏退出时自动结束线程
+            # )
+            # self._thread.start()
+
+        def _poll(self):
+            deadline = time.time() + self.timeout
+
+            while time.time() < deadline:
+                if not os.path.exists(self.action_file):
+                    time.sleep(0.1)
+                    continue
+
+                try:
+                    with open(self.action_file, "r", encoding="utf-8") as f:
+                        raw = json.load(f)
+                except (json.JSONDecodeError, OSError):
+                    time.sleep(0.1)
+                    continue
+                finally:
+                    # 无论读取是否成功，消费掉文件
+                    try:
+                        os.remove(self.action_file)
+                    except OSError:
+                        pass
+
+                # 验证 turn_id
+                if raw.get("turn_id") != self.expected_turn_id:
+                    # turn_id 不匹配：过期数据，忽略，继续等
+                    time.sleep(0.1)
+                    continue
+
+                # 验证 action 结构
+                action = raw.get("action", {})
+                action_type = action.get("type")
+
+                if action_type not in ("advance", "choice"):
+                    # self._error = f"unknown action type: {action_type!r}"
+                    self._error = "unknown action type: %r" % action_type
+                    self._ready = True
+                    return
+
+                if action_type == "choice" and "index" not in action:
+                    # self._error = "choice 类型缺少 index 字段"
+                    self._error = "choice missing index"
+                    self._ready = True
+                    return
+
+                self._result = raw
+                self._ready  = True
+                return
+
+            # 超时
+            # self._error = f"timeout: agent 在 {self.timeout}s 内未响应"
+            self._error = "timeout: agent did not respond within %ss" % self.timeout
+            self._ready = True
+
+        def is_ready(self):
+            return self._ready
+
+        def get_result(self):
+            """返回 (action_dict_or_None, error_str_or_None)"""
+            return self._result, self._error
+
 
 label a11y_reset_session:
     python:
@@ -181,8 +267,33 @@ label a11y_publish(mode, actions):
 
 label a11y_wait_for_action:
     python:
-        agent_action = a11y.wait_for_action()
-    return agent_action
+        # agent_action = a11y.wait_for_action()
+        # 创建 watcher 并启动后台线程
+        _watcher = ActionWatcher(
+            action_file      = a11y.action_file,
+            expected_turn_id = getattr(store, "a11y_turn_id", 0),
+            timeout          = 60.0,
+        )
+        _watcher.start()
+
+    # Ren'Py 主循环：每 0.1s 检查一次 watcher
+    # 这里 pause 是非阻塞的，UI 可以响应
+    while not _watcher.is_ready():
+        $ renpy.pause(0.1)
+
+    python:
+        _action_result, _action_error = _watcher.get_result()
+
+        if _action_error:
+            # 写入 store，供后续处理
+            store.bridge_last_error = _action_error
+            store.bridge_action     = None
+        else:
+            store.bridge_last_error = None
+            store.bridge_action     = _action_result
+
+    return store.bridge_action
+    # return agent_action
 
 
 label agent_say(speaker, text):
