@@ -8,12 +8,13 @@ init python:
     import os
     import time
     from datetime import datetime
-    # import uuid
+    import uuid
+    import threading
 
     a11y_turn_id = 0
     a11y_mode = "idle"
     current_actions = []
-    # session_id = str(uuid.uuid4())[:8]  # 例如: "a3f4b2c1"
+    session_id = str(uuid.uuid4())[:8]  # 例如: "a3f4b2c1"
 
     class A11yExporter:
         """
@@ -22,18 +23,31 @@ init python:
         """
 
         def __init__(self):
-            self.version = "0.2"
-            self.export_dir = os.path.join(renpy.config.gamedir, "exports")
-            self.state_file = os.path.join(self.export_dir, "state.json")
-            self.action_file = os.path.join(self.export_dir, "action.json")
-            self.legacy_choice_file = os.path.join(self.export_dir, "choice.txt")
+            self.version = "0.3"
+            self.export_dir_base = os.path.join(renpy.config.gamedir, "exports")
+            self.export_dir = self.export_dir_base
             self.ensure_export_dir()
+            self._update_paths()
+        
+        def _update_paths(self):
+            # session_id 从 store 读取（init python 里已经生成）
+            sid = getattr(store, "session_id", "default")
+
+            # 文件路径带 session_id
+            # self.state_file  = os.path.join(self.export_dir, f"state_{sid}.json")
+            # self.action_file = os.path.join(self.export_dir, f"action_{sid}.json")
+            self.state_file  = os.path.join(self.export_dir, "state_%s.json"  % sid)
+            self.action_file = os.path.join(self.export_dir, "action_%s.json" % sid)
+            # legacy 路径保留用于兼容性检测
+            self.legacy_choice_file = os.path.join(self.export_dir, "choice.txt")
 
         def ensure_export_dir(self):
             if not os.path.exists(self.export_dir):
                 os.makedirs(self.export_dir)
 
         def reset_session(self):
+            store.session_id = str(uuid.uuid4())[:8]
+            self._update_paths()
             store.a11y_turn_id = 0
             store.a11y_mode = "idle"
             store.current_actions = []
@@ -104,9 +118,9 @@ init python:
                 "current_label": getattr(store, "current_scene_id", "unknown"),
             }
 
-        def save_to_file(self, filename="state.json"):
+        def save_to_file(self):
             state = self.export_state()
-            filepath = os.path.join(self.export_dir, filename)
+            filepath = self.state_file
             tmp_path = filepath + ".tmp"
 
             with open(tmp_path, "w", encoding="utf-8") as f:
