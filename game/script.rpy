@@ -74,16 +74,8 @@ label scene_room:
 
     python:
         room_choices = [
-            {
-                "caption": "Interact with object",
-                "semantic": "engage",
-                "cognitive_load": "low"
-            },
-            {
-                "caption": "Ignore object",
-                "semantic": "avoid",
-                "cognitive_load": "minimal"
-            }
+            {"text": "Interact with object",    "semantic_label": "engage",   "cognitive_load": "low"},
+            {"text": "Ignore object",           "semantic_label": "avoid",    "cognitive_load": "minimal"}
         ]
     
     if AGENT_MODE:
@@ -128,9 +120,9 @@ label scene_crossroad:
     
     python:
         crossroad_choices = [
-            {"caption": "Go left", "semantic": "explore_path_a", "cognitive_load": "low"},
-            {"caption": "Go right", "semantic": "explore_path_b", "cognitive_load": "low"},
-            {"caption": "Stay here", "semantic": "wait", "cognitive_load": "minimal"}
+            {"text": "Go left",      "semantic_label": "explore_path_a", "cognitive_load": "low"},
+            {"text": "Go right",     "semantic_label": "explore_path_b", "cognitive_load": "low"},
+            {"text": "Stay here",    "semantic_label": "wait",           "cognitive_load": "minimal"}
         ]
     
     if AGENT_MODE:
@@ -188,7 +180,7 @@ label scene_echo:
     
     python:
         finish_choices = [
-            {"caption": "Finish", "semantic": "conclude", "cognitive_load": "minimal"}
+            {"text": "Finish",    "semantic_label": "conclude", "cognitive_load": "minimal"}
         ]
     
     if AGENT_MODE:
