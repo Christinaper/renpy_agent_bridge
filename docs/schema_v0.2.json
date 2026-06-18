@@ -1,0 +1,132 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A11y-RenPy-Bridge State Schema",
+  "version": "0.2",
+  "type": "object",
+  "required": ["schema_version", "turn_id", "mode", "scene", "narrative", "actions", "player_state"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version for compatibility"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of state export"
+    },
+    "turn_id": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic action turn identifier for this game session"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["idle", "awaiting_action", "finished"],
+      "description": "Current bridge mode"
+    },
+    "scene": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique scene identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable scene name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Semantic scene description for assistive clients"
+        },
+        "accessibility": {
+          "type": "object",
+          "properties": {
+            "visual_description": {
+              "type": "string",
+              "description": "Detailed visual description for screen readers"
+            },
+            "audio_cues": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "List of audio cues in this scene"
+            },
+            "complexity": {
+              "type": "string",
+              "enum": ["minimal", "low", "medium", "high"],
+              "description": "Cognitive complexity level"
+            }
+          }
+        }
+      }
+    },
+    "narrative": {
+      "type": "object",
+      "properties": {
+        "current_text": {
+          "type": "string",
+          "description": "Currently displayed dialogue or narration"
+        },
+        "speaker": {
+          "type": ["string", "null"],
+          "description": "Character name or null for narration"
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "description": "Currently available semantic actions",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "text"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable action identifier within this turn"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["advance", "choice"],
+            "description": "Action kind"
+          },
+          "index": {
+            "type": "integer",
+            "description": "Choice index when type is choice"
+          },
+          "text": {
+            "type": "string",
+            "description": "Human-readable action label"
+          },
+          "semantic_label": {
+            "type": "string",
+            "description": "Semantic meaning of this action"
+          },
+          "cognitive_load": {
+            "type": "string",
+            "enum": ["minimal", "low", "medium", "high"],
+            "description": "Mental effort required"
+          }
+        }
+      }
+    },
+    "choices": {
+      "type": "array",
+      "description": "Compatibility view of choice actions"
+    },
+    "player_state": {
+      "type": "object",
+      "properties": {
+        "history": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of player choices in chronological order"
+        },
+        "current_label": {
+          "type": "string",
+          "description": "Current semantic label or scene id"
+        }
+      }
+    }
+  }
+}

@@ -11,6 +11,23 @@ init python:
     # 正常时：直接运行 → Agent 模式
     AGENT_MODE = os.environ.get("RENPY_AGENT_MODE", "1").strip().lower() not in ("0", "false", "no")
 
+    def set_semantic(mood=None, emotion=None, importance=None):
+        ctx = {}
+        if mood:       ctx["mood"]       = mood
+        if emotion:    ctx["emotion"]    = emotion
+        if importance: ctx["importance"] = importance
+        store._semantic_ctx = ctx if ctx else None
+
+    def set_author_note(hint=None, player_should_feel=None):
+        note = {}
+        if hint:               note["hint"]               = hint
+        if player_should_feel: note["player_should_feel"] = player_should_feel
+        store._author_note = note if note else None
+
+    def clear_semantic():
+        store._semantic_ctx = None
+        store._author_note  = None
+
     scenes = {
         "room": {
             "name": "The Room",
@@ -100,8 +117,13 @@ label scene_room:
                 jump room_ignore
 
 label room_interact:
+    $ set_semantic(mood="mysterious", emotion="surprised", importance="high")
+    $ set_author_note(hint="玩家第一次触碰物体", player_should_feel="好奇与不安")
+
     call agent_say(None, "You touch the object.")
     call agent_say(None, "It feels cold.")
+
+    $clear_semantic()
     jump scene_crossroad
 
 label room_ignore:

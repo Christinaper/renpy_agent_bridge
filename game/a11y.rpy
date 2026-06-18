@@ -34,12 +34,13 @@ init python:
             sid = getattr(store, "session_id", "default")
 
             # 文件路径带 session_id
-            # self.state_file  = os.path.join(self.export_dir, f"state_{sid}.json")
-            # self.action_file = os.path.join(self.export_dir, f"action_{sid}.json")
             self.state_file  = os.path.join(self.export_dir, "state_%s.json"  % sid)
             self.action_file = os.path.join(self.export_dir, "action_%s.json" % sid)
             # legacy 路径保留用于兼容性检测
             self.legacy_choice_file = os.path.join(self.export_dir, "choice.txt")
+
+            print("store.session_id =", getattr(store, "session_id", None))
+            print("state_file =", self.state_file)
 
         def ensure_export_dir(self):
             if not os.path.exists(self.export_dir):
@@ -87,13 +88,39 @@ init python:
             }
 
         def _export_narrative(self):
-            return {
+            # 追加语义字段 semantic
+            base = {
                 "current_text": getattr(store, "current_narrative", ""),
-                "speaker": getattr(store, "current_speaker", None),
+                "speaker":      getattr(store, "current_speaker",   None),
             }
+            semantic = getattr(store, "_semantic_ctx", None)
+            if semantic:
+                base["semantic"] = semantic
+            author_note = getattr(store, "_author_note", None)
+            if author_note:
+                base["author_note"] = author_note
+            return base
 
         def _export_actions(self):
-            return list(getattr(store, "current_actions", []))
+            # return list(getattr(store, "current_actions", []))
+            # 重写（规范化 + 语义字段）
+            raw_actions = list(getattr(store, "current_actions", []))
+            result = []
+            for action in raw_actions:
+                entry = {
+                    "id":   action.get("id",   ""),
+                    "type": action.get("type", ""),
+                    "text": action.get("text", ""),
+                }
+                if action.get("type") == "choice":
+                    entry["index"] = action.get("index", 0)
+                for field in ("semantic_label", "cognitive_load",
+                            "consequence_hint", "emotional_weight"):
+                    val = action.get(field)
+                    if val:
+                        entry[field] = val
+                result.append(entry)
+            return result
 
         def _export_choices(self):
             choices = []

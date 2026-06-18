@@ -187,7 +187,11 @@ def describe_state(state):
     print(f"Mode: {state.get('mode')}")
     print(f"Text: {narrative.get('current_text', '')}")
     print(f"Actions: {[a.get('text', a.get('id')) for a in actions]}")
+    print(f"[DEBUG] full narrative dict: {narrative}")   # ← 临时加这一行，无条件打印
 
+    if "semantic" in narrative or "author_note" in narrative:
+        print(f"[SEMANTIC] {narrative.get('semantic')}")
+        print(f"[AUTHOR_NOTE] {narrative.get('author_note')}")
 
 def play_loop(paths):
     """持续游玩, 直到Ren'Py导出finished状态"""

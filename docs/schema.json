@@ -1,13 +1,19 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "A11y-RenPy-Bridge State Schema",
-  "version": "0.2",
+  "version": "0.3",
   "type": "object",
-  "required": ["schema_version", "turn_id", "mode", "scene", "narrative", "actions", "player_state"],
+  "required": ["schema_version", "session_id", "turn_id", "mode", "scene", "narrative", "actions", "player_state"],
   "properties": {
     "schema_version": {
       "type": "string",
-      "description": "Schema version for compatibility"
+      "description": "Schema version for compatibility. Value is \"0.3\" as of this revision."
+    },
+    "session_id": {
+      "type": "string",
+      "description": "8-character session identifier (uuid4 prefix). Distinguishes concurrent game instances and is embedded in the state/action file names (state_<session_id>.json). New in v0.3 — was generated but unused in v0.2.",
+      "minLength": 8,
+      "maxLength": 8
     },
     "timestamp": {
       "type": "string",
@@ -17,7 +23,7 @@
     "turn_id": {
       "type": "integer",
       "minimum": 0,
-      "description": "Monotonic action turn identifier for this game session"
+      "description": "Monotonic action turn identifier for this game session. Used as a handshake token: an action is only accepted if its turn_id matches the turn_id the agent last read."
     },
     "mode": {
       "type": "string",
@@ -71,6 +77,39 @@
         "speaker": {
           "type": ["string", "null"],
           "description": "Character name or null for narration"
+        },
+        "semantic": {
+          "type": "object",
+          "description": "New in v0.3. Optional structured emotional/narrative context for the current beat, set via set_semantic() in script.rpy and cleared via clear_semantic(). Omitted entirely from export when not set (does not pollute clean state).",
+          "properties": {
+            "mood": {
+              "type": "string",
+              "description": "Free-text mood label authored by the developer, e.g. \"mysterious\", \"tense\", \"hopeful\". Not a closed enum — left open for authoring flexibility."
+            },
+            "emotion": {
+              "type": "string",
+              "description": "Free-text emotion label, e.g. \"surprised\", \"anxious\", \"excited\"."
+            },
+            "importance": {
+              "type": "string",
+              "enum": ["low", "medium", "high", "critical"],
+              "description": "Narrative weight of this beat."
+            }
+          }
+        },
+        "author_note": {
+          "type": "object",
+          "description": "New in v0.3. Optional developer-authored hints for adapters, set via set_author_note(). Omitted when not set.",
+          "properties": {
+            "hint": {
+              "type": "string",
+              "description": "Free-text note for the LLM/assistive client, not meant to break immersion if surfaced."
+            },
+            "player_should_feel": {
+              "type": "string",
+              "description": "The emotional response the developer intends the player to have at this beat."
+            }
+          }
         }
       }
     },
@@ -106,13 +145,37 @@
             "type": "string",
             "enum": ["minimal", "low", "medium", "high"],
             "description": "Mental effort required"
+          },
+          "consequence_hint": {
+            "type": "string",
+            "description": "New in v0.3. Optional developer-authored hint about what this choice leads to narratively. Export pipeline supports this field as of v0.3, but authoring coverage in the demo game is not yet complete (tracked as v0.4 D-11)."
+          },
+          "emotional_weight": {
+            "type": "string",
+            "enum": ["trivial", "low", "medium", "high"],
+            "description": "New in v0.3. Optional weight of the emotional consequence of choosing this action. Same authoring-coverage caveat as consequence_hint."
           }
         }
       }
     },
     "choices": {
       "type": "array",
-      "description": "Compatibility view of choice actions"
+      "deprecated": true,
+      "description": "Compatibility view of choice actions, derived from actions[] where type == \"choice\". Superseded by actions[] as of v0.3 — new consumers should read actions[] directly. Retained for v0.2 client compatibility; no new fields will be added here.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "text": { "type": "string" },
+          "accessibility": {
+            "type": "object",
+            "properties": {
+              "semantic_label": { "type": "string" },
+              "cognitive_load": { "type": "string" }
+            }
+          }
+        }
+      }
     },
     "player_state": {
       "type": "object",
