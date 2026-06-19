@@ -91,8 +91,14 @@ label scene_room:
 
     python:
         room_choices = [
-            {"text": "Interact with object",    "semantic_label": "engage",   "cognitive_load": "low"},
-            {"text": "Ignore object",           "semantic_label": "avoid",    "cognitive_load": "minimal"}
+            # {"text": "Interact with object",    "semantic_label": "engage",   "cognitive_load": "low"},
+            # {"text": "Ignore object",           "semantic_label": "avoid",    "cognitive_load": "minimal"},
+            {"text": "Interact with object", "semantic_label": "engage", "cognitive_load": "low",
+            "consequence_hint": "触发对物体的记忆引用, later echo 场景会提及",
+            "emotional_weight": "medium"},
+            {"text": "Ignore object", "semantic_label": "avoid", "cognitive_load": "minimal",
+            "consequence_hint": "跳过物体互动, echo 场景的叙事会反映这个缺席",
+            "emotional_weight": "low"}
         ]
     
     if AGENT_MODE:
@@ -142,9 +148,15 @@ label scene_crossroad:
     
     python:
         crossroad_choices = [
-            {"text": "Go left",      "semantic_label": "explore_path_a", "cognitive_load": "low"},
-            {"text": "Go right",     "semantic_label": "explore_path_b", "cognitive_load": "low"},
-            {"text": "Stay here",    "semantic_label": "wait",           "cognitive_load": "minimal"}
+            # {"text": "Go left",      "semantic_label": "explore_path_a", "cognitive_load": "low"},
+            # {"text": "Go right",     "semantic_label": "explore_path_b", "cognitive_load": "low"},
+            # {"text": "Stay here",    "semantic_label": "wait",           "cognitive_load": "minimal"}
+            {"text": "Go left", "semantic_label": "explore_path_a", "cognitive_load": "low",
+            "consequence_hint": "通向较暗的叙事分支，呼应未知与不确定", "emotional_weight": "medium"},
+            {"text": "Go right", "semantic_label": "explore_path_b", "cognitive_load": "low",
+            "consequence_hint": "通向较亮的叙事分支，呼应清晰与坚定", "emotional_weight": "medium"},
+            {"text": "Stay here", "semantic_label": "wait", "cognitive_load": "minimal",
+            "consequence_hint": "不推进路径选择，保持当前不确定状态", "emotional_weight": "low"}
         ]
     
     if AGENT_MODE:
@@ -202,7 +214,9 @@ label scene_echo:
     
     python:
         finish_choices = [
-            {"text": "Finish",    "semantic_label": "conclude", "cognitive_load": "minimal"}
+            # {"text": "Finish",    "semantic_label": "conclude", "cognitive_load": "minimal"}
+            {"text": "Finish", "semantic_label": "conclude", "cognitive_load": "minimal",
+            "consequence_hint": "结束 demo, 触发收尾叙事", "emotional_weight": "trivial"}
         ]
     
     if AGENT_MODE:
