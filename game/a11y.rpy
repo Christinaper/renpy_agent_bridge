@@ -355,6 +355,8 @@ label agent_choice(choice_items):
                     "text": item.get("caption", item.get("text", "")),
                     "semantic_label": item.get("semantic", item.get("semantic_label", "")),
                     "cognitive_load": item.get("cognitive_load", "medium"),
+                    "consequence_hint": item.get("consequence_hint"),
+                    "emotional_weight": item.get("emotional_weight"),
                 })
 
         call a11y_publish("awaiting_action", actions)
