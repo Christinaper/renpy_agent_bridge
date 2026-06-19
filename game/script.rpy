@@ -32,29 +32,29 @@ init python:
         "room": {
             "name": "The Room",
             "description": "A minimal space with one object",
-            "visual_desc": "A gray room with a square object in the center",
-            "audio_cues": [],
+            "visual_desc": "A gray room with a square object in the center, no other features visible",
+            "audio_cues": ["low hum"],
             "complexity": "low"
         },
         "crossroad": {
             "name": "The Crossroad",
             "description": "A point of divergence with three paths",
             "visual_desc": "Three corridors extending in different directions",
-            "audio_cues": ["ambient echo"],
+            "audio_cues": ["ambient echo", "distant wind"],
             "complexity": "medium"
         },
         "echo": {
             "name": "The Echo",
             "description": "A familiar place, but changed",
             "visual_desc": "The same room, but the object has moved",
-            "audio_cues": ["faint repetition"],
+            "audio_cues": ["faint repetition", "muffled echo of earlier dialogue"],
             "complexity": "low"
         },
         "end": {
             "name": "The End",
             "description": "Demo conclusion",
-            "visual_desc": "A final screen",
-            "audio_cues": [],
+            "visual_desc": "A plain dark screen with no objects, signaling closure",
+            "audio_cues": ["silence"],
             "complexity": "minimal"
         }
     }
